@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>የአየር ሁኔታ መረጃ - ገብረ ጉራቻ</title>
+    <style>
+        /* CSS Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header, footer {
+            background-color: #007bff;
+            color: #fff;
+            width: 100%;
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        footer p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 800px;
+            text-align: center;
+            margin: 20px 0;
+            flex: 1;
+        }
+
+        .weather-form {
+            margin-bottom: 20px;
+        }
+
+        .weather-form input {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 60%;
+            margin-right: 10px;
+        }
+
+        .weather-form button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .weather-form button:hover {
+            background-color: #218838;
+        }
+
+        .weather-display {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .weather-card {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 30%;
+        }
+
+        .weather-card h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .weather-card p {
+            font-size: 16px;
+            color: #555;
+        }
+
+        .highlight {
+            background-color: #ffdd57;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .hourly-weather {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .hourly-weather h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .hourly-weather ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .hourly-weather ul li {
+            padding: 5px 0;
+            border-bottom: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>የአየር ሁኔታ መረጃ - ገብረ ጉራቻ</h1>
+    </header>
+
+    <div class="container">
+        <div class="weather-form">
+            <input type="text" id="location" placeholder="ከተማ ስም" value="Gebre Guracha" disabled>
+            <button onclick="getWeather()">የአየር ሁኔታ መረጃ ያግኙ</button>
+        </div>
+        <div class="weather-display">
+            <div id="daily-weather" class="weather-card">
+                <h2>የዛሬ የአየር ሁኔታ</h2>
+                <p id="today-temp" class="highlight"></p>
+                <p id="today-status"></p>
+            </div>
+            <div id="tomorrow-weather" class="weather-card">
+                <h2>የነገ የአየር ሁኔታ</h2>
+                <p id="tomorrow-temp"></p>
+                <p id="tomorrow-status"></p>
+            </div>
+            <div id="weekly-weather" class="weather-card">
+                <h2>የሳምንት የአየር ሁኔታ</h2>
+                <p id="weekly-temp"></p>
+            </div>
+        </div>
+        <div class="hourly-weather">
+            <h3>የዛሬ በሰዓት የሙቀት መጠን</h3>
+            <ul id="hourly-temp-list"></ul>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2023 የአየር ሁኔታ መረጃ ስርዓት. ሁሉም መብቶች የተጠበቁ ናቸው.</p>
+    </footer>
+
+    <script>
+        // JavaScript Code
+        const apiKey = 'fd27a632ca16e05b1cc0fd7bbd2b57de'; // Your API key
+        const lat = 9.8; // Latitude for Gebre Guracha
+        const lon = 38.4; // Longitude for Gebre Guracha
+        const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=am`;
+
+        // Map English weather descriptions to Amharic
+        const weatherStatusMap = {
+            'clear sky': 'ንጹህ ሰማይ',
+            'few clouds': 'ጥቂት ደመና',
+            'scattered clouds': 'በተበተነ ደመና',
+            'broken clouds': 'የተሰበረ ደመና',
+            'overcast clouds': 'ደመናማ',
+            'light rain': 'ቀላል ዝናብ',
+            'moderate rain': 'መካከለኛ ዝናብ',
+            'heavy rain': 'ከባድ ዝናብ',
+            'thunderstorm': 'ነጎድጓድ',
+            'snow': 'በረዶ',
+            'mist': 'ጭጋግ'
+        };
+
+        function getWeather() {
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(data); // Debugging: Log the API response
+                    if (data.cod === "200" && data.list && data.list.length > 0) {
+                        const today = data.list[0];
+                        const tomorrow = data.list[8]; // Tomorrow's data (8 steps ahead, 24 hours)
+                        const weekly = data.list.slice(0, 7);
+                        const monthly = data.list.slice(0, 30);
+
+                        // Display today's weather
+                        document.getElementById('today-temp').innerText = `የዛሬ ሙቀት: ${today.main.temp}°C`;
+                        document.getElementById('today-status').innerText = `የአየር ሁኔታ: ${weatherStatusMap[today.weather[0].description] || today.weather[0].description}`;
+
+                        // Display tomorrow's weather
+                        document.getElementById('tomorrow-temp').innerText = `የነገ ሙቀት: ${tomorrow.main.temp}°C`;
+                        document.getElementById('tomorrow-status').innerText = `የአየር ሁኔታ: ${weatherStatusMap[tomorrow.weather[0].description] || tomorrow.weather[0].description}`;
+
+                        // Display weekly average temperature
+                        document.getElementById('weekly-temp').innerText = `የሳምንቱ አማካይ ሙቀት: ${calculateAverageTemp(weekly)}°C`;
+
+                        // Display hourly temperatures
+                        const hourlyList = document.getElementById('hourly-temp-list');
+                        hourlyList.innerHTML = ''; // Clear previous data
+                        data.list.slice(0, 8).forEach(hour => {
+                            const li = document.createElement('li');
+                            li.innerText = `ሰዓት: ${hour.dt_txt.split(' ')[1]} - ሙቀት: ${hour.main.temp}°C`;
+                            hourlyList.appendChild(li);
+                        });
+                    } else {
+                        console.error('API Error:', data.message);
+                        alert('የአየር ሁኔታ መረጃ ማግኘት አልተቻለም። እባክዎ ቆይተው ይሞክሩ።');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching weather data:', error);
+                    alert('የአየር ሁኔታ መረጃ ማግኘት አልተቻለም። እባክዎ ቆይተው ይሞክሩ።');
+                });
+        }
+
+        function calculateAverageTemp(weatherData) {
+            const totalTemp = weatherData.reduce((sum, day) => sum + day.main.temp, 0);
+            return (totalTemp / weatherData.length).toFixed(2);
+        }
+
+        // Initial load
+        getWeather();
+    </script>
+</body>
+</html>
